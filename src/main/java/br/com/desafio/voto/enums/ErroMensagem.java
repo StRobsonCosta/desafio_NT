@@ -10,6 +10,9 @@ public enum ErroMensagem {
     CPF_NAO_ENCONTRADO("CPF não encontrado."),
     ASSOCIADO_JA_VOTOU("Associado já votou nesta pauta."),
     SESSAO_ENCERRADA("A sessão de votação já foi encerrada."),
+    PAUTA_INVALIDA("Pauta inválida. O objeto não pode ser nulo."),
+    DESCRICAO_INVALIDA("A descrição da pauta é obrigatória e não pode estar vazia."),
+    ERRO_SALVAR_PAUTA("Erro ao salvar a pauta no banco de dados."),
     ERRO_VALIDAR_CPF("Erro ao validar oCPF.");
 
     private final String mensagem;

@@ -1,5 +1,6 @@
 package br.com.desafio.voto.service;
 
+import br.com.desafio.voto.dto.PautaDTO;
 import br.com.desafio.voto.dto.ResultadoVotacaoDTO;
 import br.com.desafio.voto.dto.VotoDTO;
 import br.com.desafio.voto.enums.ErroMensagem;
@@ -13,13 +14,22 @@ import br.com.desafio.voto.repository.PautaRepository;
 import br.com.desafio.voto.repository.SessaoVotacaoRepository;
 import br.com.desafio.voto.repository.VotoRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,21 +42,32 @@ public class VotacaoService {
     private final AssociadoRepository associadoRepo;
     private final CpfValidationService cpfValidationService;
     private final KafkaTemplate<String, String> kafkaTemplate;
+    private final RedisTemplate<String, SessaoVotacao> redisTemplate;
 
-    @Transactional
-    public SessaoVotacao abrirSessao(UUID pautaId, long minutos) {
-        Pauta pauta = pautaRepo.findById(pautaId)
-                .orElseThrow(() -> new VotosException(ErroMensagem.PAUTA_NAO_ENCONTRADA));
+    private static final Logger logger = LoggerFactory.getLogger(VotacaoService.class);
 
-        if (sessaoVotacaoRepo.existsByPautaId(pautaId))
-            throw new VotosException(ErroMensagem.SESSAO_JA_ABERTA);
+    public void abrirSessao(UUID pautaId, long minutos) {
 
-
+        String key = "sessao:" + pautaId;
         LocalDateTime agora = LocalDateTime.now();
         LocalDateTime fim = agora.plusMinutes(minutos);
 
-        SessaoVotacao sessao = new SessaoVotacao(null, pauta, agora, fim);
-        return sessaoVotacaoRepo.save(sessao);
+        Pauta pauta = pautaRepo.findById(pautaId)
+                .orElseThrow(() ->  new VotosException(ErroMensagem.PAUTA_NAO_ENCONTRADA));
+
+        SessaoVotacao sessao = new SessaoVotacao(null, new Pauta(pautaId, pauta.getDescricao()), agora, fim);
+
+        redisTemplate.opsForValue().set(key, sessao, minutos, TimeUnit.MINUTES);
+    }
+
+    public SessaoVotacao buscarSessao(UUID pautaId) {
+        String key = "sessao:" + pautaId;
+        return redisTemplate.opsForValue().get(key);
+    }
+
+    public void fecharSessao(UUID pautaId) {
+        String key = "sessao:" + pautaId;
+        redisTemplate.delete(key);
     }
 
     @Transactional
@@ -60,17 +81,15 @@ public class VotacaoService {
         Pauta pauta = pautaRepo.findById(votoDTO.getPautaId())
                 .orElseThrow(() ->  new VotosException(ErroMensagem.PAUTA_NAO_ENCONTRADA));
 
-        SessaoVotacao sessao = sessaoVotacaoRepo.findByPautaId(votoDTO.getPautaId())
-                .orElseThrow(() -> new VotosException(ErroMensagem.SESSAO_ENCERRADA));
+        SessaoVotacao sessao = buscarSessao(votoDTO.getPautaId());
 
         validarSessaoAberta(sessao);
 
-        // Verifica se o carinha já votou na Pauta
         if (votoRepo.existsByPautaIdAndAssociadoId(pauta.getId(), associado.getId()))
             throw new VotosException(ErroMensagem.ASSOCIADO_JA_VOTOU);
 
-        // Registra o voto
         Voto voto = new Voto(null, pauta, associado, votoDTO.getValorVoto());
+
         return votoRepo.save(voto);
     }
 
@@ -98,12 +117,49 @@ public class VotacaoService {
                 resultado.getDescricaoPauta(), resultado.getVotosSim(), resultado.getVotosNao());
 
         kafkaTemplate.send("votacao_resultados", mensagem);
+
+        logger.info("Mensagem enviada para o Kafka: {}", mensagem);
     }
 
     private void validarSessaoAberta(SessaoVotacao sessao) {
-        if (sessao.getFim().isBefore(LocalDateTime.now()))
+        if (Objects.isNull(sessao))
             throw new VotosException(ErroMensagem.SESSAO_ENCERRADA);
 
+    }
+
+    public PautaDTO criarPauta(PautaDTO pautaDTO) {
+        if (Objects.isNull(pautaDTO))
+            throw new VotosException(ErroMensagem.PAUTA_INVALIDA);
+        if (!StringUtils.hasText(pautaDTO.getDescricao()))
+            throw new VotosException(ErroMensagem.DESCRICAO_INVALIDA);
+
+        Pauta pauta = new Pauta();
+        pauta.setDescricao(pautaDTO.getDescricao());
+
+        try {
+            Pauta novaPauta = pautaRepo.save(pauta);
+            return new PautaDTO(novaPauta.getId(), novaPauta.getDescricao());
+        } catch (Exception e) {
+            throw new VotosException(ErroMensagem.ERRO_SALVAR_PAUTA, e);
+        }
+    }
+
+    public PautaDTO buscarPauta(UUID pautaId) {
+        Pauta pauta = pautaRepo.findById(pautaId)
+                .orElseThrow(() ->  new VotosException(ErroMensagem.PAUTA_NAO_ENCONTRADA));
+
+        return new PautaDTO(pauta.getId(),pauta.getDescricao());
+    }
+
+    public List<PautaDTO> listarPautas() {
+        List<Pauta> pautas = pautaRepo.findAll();
+
+        if (CollectionUtils.isEmpty(pautas))
+            throw new VotosException(ErroMensagem.PAUTA_NAO_ENCONTRADA);
+
+        return pautas.stream()
+                .map(pauta -> new PautaDTO(pauta.getId(),pauta.getDescricao()))
+                .collect(Collectors.toList());
     }
 
 }
