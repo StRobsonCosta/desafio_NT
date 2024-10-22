@@ -10,7 +10,7 @@ import java.util.UUID;
 @Repository
 public interface VotoRepository extends JpaRepository<Voto, UUID> {
 
-    Boolean existsByPautaIdAndAssociadoId(UUID pautaId, UUID associadoId); //validar se associado já votou na pauta RN3
+    Boolean existsByPautaIdAndAssociadoId(UUID pautaId, UUID associadoId);
 
-    List<Voto> findByPautaId(UUID pautaId); //lista todos os votos para RN4
+    List<Voto> findByPautaId(UUID pautaId);
 }

@@ -10,4 +10,5 @@ import java.util.UUID;
 public interface AssociadoRepository extends JpaRepository<Associado, UUID> {
 
     Boolean existsByCpf(String cpf);
+
 }

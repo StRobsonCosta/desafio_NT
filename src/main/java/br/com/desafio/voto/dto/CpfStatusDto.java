@@ -1,5 +1,6 @@
 package br.com.desafio.voto.dto;
 
+import br.com.desafio.voto.enums.StatusVoto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -7,9 +8,6 @@ import lombok.Data;
 @Data
 @Builder
 @AllArgsConstructor
-public class ResultadoVotacaoDTO {
-
-    private String descricaoPauta;
-    private Long votosSim;
-    private Long votosNao;
+public class CpfStatusDto {
+    private StatusVoto status;
 }
