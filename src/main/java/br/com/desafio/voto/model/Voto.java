@@ -34,6 +34,6 @@ public class Voto implements Serializable {
     private Associado associado;
 
     @Column(nullable = false)
-    private Boolean valorVoto;  // talvez não seja um bom nome para esse atributo
+    private Boolean valorVoto;
 
 }

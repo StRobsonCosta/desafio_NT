@@ -10,6 +10,7 @@ public enum ErroMensagem {
     ERRO_CRIAR_ASSOCIADO("Erro ao criar associado."),
     CPF_INVALIDO("Formato de CPF inválido."),
     CPF_NAO_ENCONTRADO("CPF não encontrado."),
+    CPF_JA_CADASTRADO("Cpf Já Cadastrado."),
     ASSOCIADO_JA_VOTOU("Associado já votou nesta pauta."),
     SESSAO_ENCERRADA("A sessão de votação já foi encerrada."),
     PAUTA_INVALIDA("Pauta inválida. O objeto não pode ser nulo."),

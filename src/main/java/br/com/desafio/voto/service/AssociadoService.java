@@ -23,12 +23,7 @@ public class AssociadoService {
 
 
     public AssociadoDto criarAssociado(AssociadoDto dto) {
-        Boolean cpfValido = cpfValidator.cpfValido(dto.getCpf());
-
-        if (Boolean.FALSE.equals(cpfValido))
-            throw new VotosException(ErroMensagem.ASSOCIADO_INVALIDO);
-        if (Objects.isNull(dto.getCpf()))
-            throw new VotosException(ErroMensagem.CPF_NAO_ENCONTRADO);
+        validarCpfAssociado(dto);
 
         Associado associado = new Associado();
         associado.setNome(dto.getNome());
@@ -40,6 +35,22 @@ public class AssociadoService {
         } catch (Exception e) {
             throw new VotosException(ErroMensagem.ERRO_CRIAR_ASSOCIADO, e);
         }
+    }
+
+    protected void validarCpfAssociado(AssociadoDto dto) {
+        if (Objects.isNull(dto.getCpf()))
+            throw new VotosException(ErroMensagem.CPF_NAO_ENCONTRADO);
+
+        Boolean cpfValido = cpfValidator.cpfValido(dto.getCpf());
+
+        if (Boolean.FALSE.equals(cpfValido))
+            throw new VotosException(ErroMensagem.CPF_INVALIDO);
+
+        Boolean cpfDuplicado = associadoRepo.existsByCpf(dto.getCpf());
+
+        if (Boolean.TRUE.equals(cpfDuplicado))
+            throw new VotosException(ErroMensagem.CPF_JA_CADASTRADO);
+
     }
 
     public AssociadoDto buscarAssociado(UUID associadoId) {
