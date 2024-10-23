@@ -4,6 +4,7 @@ import br.com.desafio.voto.enums.ErroMensagem;
 import br.com.desafio.voto.exception.VotosException;
 import br.com.desafio.voto.service.VotacaoService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class RedisExpirationListener implements MessageListener {
@@ -27,6 +29,7 @@ public class RedisExpirationListener implements MessageListener {
             UUID pautaId = UUID.fromString(pautaIdStr);
             votacaoService.publicarResultado(pautaId);
         } catch (Exception e) {
+            log.error("Erro ao processar a expiração da sessão", e);
             throw new VotosException(ErroMensagem.SESSAO_JA_ABERTA, e);
         }
     }
