@@ -49,7 +49,7 @@ src/
 │       ├── application.properties  # Configurações da aplicação
 │       └── application.yml         # Configurações de produção (opcional)
 └── test/                           # Testes unitários e de integração
-
+```
 
 ## **Stacks Utilizadas**
 
@@ -77,6 +77,7 @@ src/
 
    ```bash
    mvn clean package -DskipTests
+  ```
 
 2. **Construir a imagem Docker da aplicação**:
 
