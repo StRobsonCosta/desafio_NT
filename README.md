@@ -83,16 +83,19 @@ src/
 
    ```bash
    mvn clean package -DskipTests
+   ```
 
 3. **Executar os serviços com Docker Compose**:
 
    ```bash
    docker-compose up --build
+   ```
 
 4. **Verificar se os containers estão rodando**:
 
    ```bash
    docker ps
+   ```
    
 ---
 
@@ -131,6 +134,7 @@ Execute os testes com o Maven:
 
    ```bash
    mvn test
+   ```
 
 ### **Cobertura de Testes**
 - A cobertura de testes foi implementada para garantir que:
@@ -143,9 +147,11 @@ Execute os testes com o Maven:
 
    ```bash
    mvn jacoco:report
+   ```
    
    ```bash
    target/site/jacoco/index.html
+   ```
    
 ---
 
