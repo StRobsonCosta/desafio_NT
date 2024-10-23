@@ -6,6 +6,8 @@ public enum ErroMensagem {
     SESSAO_JA_ABERTA("Já existe uma sessão aberta para esta pauta."),
     ASSOCIADO_NAO_ENCONTRADO("Associado não encontrado para o ID fornecido."),
     ASSOCIADO_INAPTO("Associado não está apto para votarr."),
+    ASSOCIADO_INVALIDO("Associado inválido. O objeto não pode ser nulo."),
+    ERRO_CRIAR_ASSOCIADO("Erro ao criar associado."),
     CPF_INVALIDO("Formato de CPF inválido."),
     CPF_NAO_ENCONTRADO("CPF não encontrado."),
     ASSOCIADO_JA_VOTOU("Associado já votou nesta pauta."),

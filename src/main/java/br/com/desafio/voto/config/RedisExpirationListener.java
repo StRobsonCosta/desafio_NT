@@ -1,5 +1,7 @@
 package br.com.desafio.voto.config;
 
+import br.com.desafio.voto.enums.ErroMensagem;
+import br.com.desafio.voto.exception.VotosException;
 import br.com.desafio.voto.service.VotacaoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.connection.Message;
@@ -24,9 +26,8 @@ public class RedisExpirationListener implements MessageListener {
         try {
             UUID pautaId = UUID.fromString(pautaIdStr);
             votacaoService.publicarResultado(pautaId);
-            kafkaTemplate.send("votacao_resultados", "Sessão da pauta " + pautaId + " foi encerrada.");
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new VotosException(ErroMensagem.SESSAO_JA_ABERTA, e);
         }
     }
 }

@@ -35,6 +35,4 @@ public class SessaoVotacao implements Serializable {
 
     @Column(nullable = false)
     private LocalDateTime fim;
-
-    //Lembrar de validar como ficou o table no banco
 }

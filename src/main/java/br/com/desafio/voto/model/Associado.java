@@ -25,8 +25,9 @@ public class Associado implements Serializable {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column
+    private String nome;
+
     @Column(nullable = false, unique = true)
     private String cpf;
-
-    //colocar nome para facilitar nos logs e tals
 }
