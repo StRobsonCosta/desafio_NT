@@ -112,7 +112,7 @@ public class VotacaoService {
         String mensagem = String.format("Resultado da Pauta '%s': Sim=%d, Não=%d",
                 resultado.getDescricaoPauta(), resultado.getVotosSim(), resultado.getVotosNao());
 
-        kafkaTemplate.send("Sessão Encerrada| votacao_resultados", mensagem);
+        kafkaTemplate.send("votacao_resultados", mensagem);
 
         log.info("Mensagem enviada para o Kafka: {}", mensagem);
     }
