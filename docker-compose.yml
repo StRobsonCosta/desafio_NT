@@ -6,22 +6,42 @@ services:
     ports:
       - "6379:6379"
     command: redis-server --notify-keyspace-events Ex
+    networks:
+      - app-nt
+    volumes:
+      - redis_data:/data/db
 
   zookeeper:
     image: wurstmeister/zookeeper
     container_name: zookeeper-nt
     ports:
       - "2181:2181"
+    networks:
+      - app-nt
 
   kafka:
     image: wurstmeister/kafka
     container_name: kafka-nt
     ports:
       - "9092:9092"
+      - "7071:7071"
     environment:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+    depends_on:
+      - zookeeper
+    networks:
+      - app-nt
+      
+  mailhog:
+    container_name: mailHog_nt
+    image: mailhog/mailhog:latest
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    networks:
+      - app-nt    
 
   app:
     build: .
@@ -34,6 +54,8 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/voto_db
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    networks:
+      - app-nt
 
   db:
     image: postgres:13-alpine
@@ -44,4 +66,16 @@ services:
       POSTGRES_DB: voto_db
     ports:
       - "5432:5432"
+    networks:
+      - app-nt
+    volumes:
+      - postgres_data:/data/db
 
+networks:
+  app-nt:
+    driver: bridge
+
+
+volumes:
+  postgres_data:
+  redis_data:
