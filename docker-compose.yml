@@ -5,11 +5,17 @@ services:
     container_name: redis-nt
     ports:
       - "6379:6379"
-    command: redis-server --notify-keyspace-events Ex
+    command: redis-server --requirepass "" --notify-keyspace-events Ex
     networks:
       - app-nt
     volumes:
       - redis_data:/data/db
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
 
   zookeeper:
     image: wurstmeister/zookeeper
@@ -27,12 +33,17 @@ services:
       - "7071:7071"
     environment:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
     depends_on:
       - zookeeper
     networks:
       - app-nt
+    healthcheck:
+      test: ["CMD", "kafka-topics.sh", "--list", "--bootstrap-server", "kafka:9092"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
       
   mailhog:
     container_name: mailHog_nt
@@ -49,11 +60,18 @@ services:
     ports:
       - "8081:8081"
     depends_on:
-      - redis
-      - kafka
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      db:
+        condition: service_started
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/voto_db
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_REDIS_PASSWORD: ""
     networks:
       - app-nt
 
@@ -70,6 +88,11 @@ services:
       - app-nt
     volumes:
       - postgres_data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 networks:
   app-nt:
