@@ -96,7 +96,12 @@ src/
    ```bash
    docker ps
    ```
-   
+
+5. **Simular Recebimento de Email**:
+
+- Após rodar a Aplicação e realizar um voto é possível validar o disparo de mensagem com MailHog, acessando a URL: [http://localhost:8025/](http://localhost:8025/)
+- O disparo só ocorre após o fechamento da Sessão (tempo definido na Requisição **Abrir Sessão** com default de **1 min**).
+
 ---
 
 ## **Validação dos Endpoints com Swagger**
