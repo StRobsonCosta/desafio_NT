@@ -80,7 +80,8 @@ jobs:
       
     - name: Verify JAR generation
       run: |
-          if [ ! -f target/voto-*.jar ]; then
+          JAR_FILE=$(ls target/*.jar 2>/dev/null)
+          if [ -z "$JAR_FILE" ]; then
             echo "JAR file not found!" && exit 1
           fi 
 
@@ -99,7 +100,7 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Build Docker Image
-      run: docker build -t voto-app .
+      run: docker build --no-cache -t voto-app .
 
     - name: Push Docker Image to Docker Hub
       env:
