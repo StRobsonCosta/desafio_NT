@@ -1,3 +1,4 @@
+
 # **Documentação da Aplicação de Votação**
 
 ## **Índice**
@@ -5,9 +6,10 @@
 2. [Arquitetura e Estrutura do Projeto](#arquitetura-e-estrutura-do-projeto)
 3. [Stacks Utilizadas](#stacks-utilizadas)
 4. [Configuração e Execução com Docker](#configuração-e-execução-com-docker)
-5. [Validação de Endpoints com Swagger](#validação-de-endpoints-com-swagger)
+5. [Validação dos Endpoints com Swagger](#validação-dos-endpoints-com-swagger)
 6. [Testes Automatizados e Cobertura](#testes-automatizados-e-cobertura)
-7. [Considerações Finais](#considerações-finais)
+7. [Testes de Performance Com K6](#testes-de-performance-com-k6)
+8. [Considerações Finais](#considerações-finais)
 
 ---
 
@@ -41,15 +43,19 @@ src/
 │   ├── java/br/com/desafio/voto/
 │   │   ├── config/         # Configurações de Redis, Kafka e agendamentos
 │   │   ├── controller/     # Controladores REST
+│   │   ├── dto/            # Classes DTOs 
+│   │   ├── enums/          # Enums dos Erros Exceções e Status do Voto
 │   │   ├── model/          # Entidades (Pauta, SessaoVotacao, Voto, etc.)
 │   │   ├── repository/     # Repositórios JPA e Redis
 │   │   ├── service/        # Lógica de negócio (Sessões, Votos, etc.)
 │   │   └── exception/      # Exceções personalizadas
 │   └── resources/
-│       ├── application.properties  # Configurações da aplicação
-│       └── application.yml         # Configurações de produção (opcional)
-└── test/                           # Testes unitários e de integração
+│       ├── application.properties        # Configurações da aplicação
+│       └── application-hml.properties    # Configurações de homologação (para rodar via docker)
+└── test/                                 # Testes unitários e de integração
 ```
+
+---
 
 ## **Stacks Utilizadas**
 
@@ -77,12 +83,12 @@ src/
 
    ```bash
    mvn clean package -DskipTests
-  ```
+   ```
 
 2. **Construir a imagem Docker da aplicação**:
 
    ```bash
-   mvn clean package -DskipTests
+   docker build -t voto-app .
    ```
 
 3. **Executar os serviços com Docker Compose**:
@@ -99,7 +105,7 @@ src/
 
 5. **Simular Recebimento de Email**:
 
-- Após rodar a Aplicação e realizar um voto é possível validar o disparo de mensagem com MailHog, acessando a URL: [http://localhost:8025/](http://localhost:8025/)
+- Após rodar a Aplicação e realizar um voto, é possível validar o disparo de mensagem com MailHog, acessando a URL: [http://localhost:8025/](http://localhost:8025/)
 - O disparo só ocorre após o fechamento da Sessão (tempo definido na Requisição **Abrir Sessão** com default de **1 min**).
 
 ---
@@ -115,7 +121,7 @@ Após subir a aplicação com Docker, acesse o **Swagger UI** para testar os end
 ### **Endpoints Disponíveis**
 
 - **Associado**:
-  - `POST /api/Associado`: Criar/Buscar/Deletar associado.
+  - `POST /api/associado`: Criar/Buscar/Deletar associado.
   
 - **Pauta**:
   - `POST /api/pauta`: Criar/Buscar/Deletar pauta.
@@ -128,7 +134,7 @@ Após subir a aplicação com Docker, acesse o **Swagger UI** para testar os end
 
 - **Resultados**:
   - `GET /api/votacao/resultado/{pautaId}`: Consultar o resultado de uma votação.
-   
+
 ---
 
 ## **Testes Automatizados e Cobertura**
@@ -142,10 +148,11 @@ Execute os testes com o Maven:
    ```
 
 ### **Cobertura de Testes**
+
 - A cobertura de testes foi implementada para garantir que:
-	- Todos os serviços possuem cobertura.
-	- A lógica de sessão, votação e publicação no Kafka foi validada.
-	
+  - Todos os serviços possuem cobertura.
+  - A lógica de sessão, votação e publicação no Kafka foi validada.
+
 - A cobertura pode ser visualizada usando o Jacoco (integrado ao Maven).
 
 ### **Gerar Relatório de Cobertura**
@@ -157,11 +164,25 @@ Execute os testes com o Maven:
    ```bash
    target/site/jacoco/index.html
    ```
-   
+
 ---
+
+## **Testes de Performance Com K6**
+
+- É possível ajustar a estratégia do teste alterando os stages no arquivo **teste_performance.js**.
+
+- Comando para realizar o teste (presumindo que a API esteja rodando pelo Docker):
+
+   ```bash
+   docker run --rm -i loadimpact/k6 run - < teste_performance.js
+   ```
+
+---
+
+## **Considerações Finais**
 
 Esta aplicação foi projetada para ser **modular e escalável**, usando boas práticas como:
 
 - **SOLID** para organização dos serviços.
 - **Redis com TTL** para gerenciamento eficiente de sessões.
-- **Kafka** para garantir uma comunicação assíncrona entre os serviços.   
+- **Kafka** para garantir uma comunicação assíncrona entre os serviços.
