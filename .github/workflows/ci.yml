@@ -92,6 +92,12 @@ jobs:
       with:
         name: jacoco-report
         path: target/site/jacoco
+        
+    - name: List files in target directory
+        run: ls target
+        
+    - name: List files in project root
+  	run: ls -R .    
 
   docker:
     runs-on: ubuntu-latest
@@ -102,7 +108,7 @@ jobs:
       uses: actions/checkout@v4
       
     - name: Build Docker Image
-      run: docker build --no-cache -t voto-app .
+      run: docker build --no-cache -t voto-app:latest .
 
     - name: Push Docker Image to Docker Hub
       env:
