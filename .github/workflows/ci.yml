@@ -77,15 +77,7 @@ jobs:
 
     - name: Build and test with Maven
       run: mvn clean package jacoco:report --fail-at-end
-      
-    - name: Check if target directory exists
-      run: |
-          if [ -d "target" ]; then
-              echo "Target directory exists."
-          else
-              echo "Target directory does not exist!" && exit 1
-          fi   
-      
+           
     - name: Verify JAR generation
       run: |
           echo "Listing files in target directory:"
