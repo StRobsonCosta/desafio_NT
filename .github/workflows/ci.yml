@@ -94,10 +94,10 @@ jobs:
         path: target/site/jacoco
         
     - name: List files in target directory
-        run: ls target
+       run: ls target
         
     - name: List files in project root
-  	run: ls -R .    
+      run: ls -R .    
 
   docker:
     runs-on: ubuntu-latest
