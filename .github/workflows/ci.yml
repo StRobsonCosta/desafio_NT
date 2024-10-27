@@ -108,7 +108,9 @@ jobs:
       uses: actions/checkout@v4
       
     - name: Build Docker Image
-      run: docker build --no-cache -t voto-app:latest .
+      run: |
+        echo "Building Docker image..."
+        DOCKER_BUILDKIT=0 docker build --no-cache -t voto-app:latest .
 
     - name: Push Docker Image to Docker Hub
       env:
