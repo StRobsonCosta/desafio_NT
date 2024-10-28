@@ -47,11 +47,11 @@ public class AssociadoControllerTest {
 
     @Test
     public void buscarAssociado_deveRetornarAssociadoComStatus200() {
-        when(associadoService.buscarAssociado(associadoId)).thenReturn(associadoDto);
+        when(associadoService.buscarAssociadoDto(associadoId)).thenReturn(associadoDto);
 
         ResponseEntity<AssociadoDto> response = associadoController.buscarAssociado(associadoId);
 
-        verify(associadoService).buscarAssociado(associadoId);
+        verify(associadoService).buscarAssociadoDto(associadoId);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo(associadoDto);
     }
@@ -59,11 +59,11 @@ public class AssociadoControllerTest {
     @Test
     public void listarAssociados_deveRetornarListaDeAssociadosComStatus200() {
         List<AssociadoDto> associados = List.of(associadoDto);
-        when(associadoService.listarAssocidados()).thenReturn(associados);
+        when(associadoService.listarAssocidadosDto()).thenReturn(associados);
 
         ResponseEntity<?> response = associadoController.listarAssociados();
 
-        verify(associadoService).listarAssocidados();
+        verify(associadoService).listarAssocidadosDto();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo(associados);
     }

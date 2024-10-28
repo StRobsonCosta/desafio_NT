@@ -70,13 +70,39 @@ public class AssociadoServiceTest {
     }
 
     @Test
-    void buscarAssociado_DeveRetornarAssociadoDto_QuandoAssociadoExiste() {
+    void buscarAssociado_DeveRetornarAssociadoDto_QuandoAssociadoDtoExiste() {
 
         UUID associadoId = UUID.randomUUID();
         Associado associado = new Associado(associadoId, "João Silva", "12345678901");
         when(associadoRepo.findById(associadoId)).thenReturn(Optional.of(associado));
 
-        AssociadoDto resultado = associadoService.buscarAssociado(associadoId);
+        AssociadoDto resultado = associadoService.buscarAssociadoDto(associadoId);
+
+        assertNotNull(resultado);
+        assertEquals(associadoId, resultado.getId());
+        verify(associadoRepo, times(1)).findById(associadoId);
+    }
+
+    @Test
+    void buscarAssociado_DeveLancarVotosException_QuandoAssociadoDtoNaoEncontrado() {
+
+        UUID associadoId = UUID.randomUUID();
+        when(associadoRepo.findById(associadoId)).thenReturn(Optional.empty());
+
+        VotosException exception = assertThrows(VotosException.class, () ->
+                associadoService.buscarAssociadoDto(associadoId)
+        );
+        assertEquals(ErroMensagem.ASSOCIADO_NAO_ENCONTRADO.getMensagem(), exception.getMessage());
+    }
+
+    @Test
+    void buscarAssociado_DeveRetornarAssociado_QuandoAssociadoExiste() {
+
+        UUID associadoId = UUID.randomUUID();
+        Associado associado = new Associado(associadoId, "João Silva", "12345678901");
+        when(associadoRepo.findById(associadoId)).thenReturn(Optional.of(associado));
+
+        Associado resultado = associadoService.buscarAssociado(associadoId);
 
         assertNotNull(resultado);
         assertEquals(associadoId, resultado.getId());
@@ -103,7 +129,7 @@ public class AssociadoServiceTest {
                 new Associado(UUID.randomUUID(), "Maria Santos", "09876543210")
         );
         when(associadoRepo.findAll()).thenReturn(associados);
-        List<AssociadoDto> resultado = associadoService.listarAssocidados();
+        List<AssociadoDto> resultado = associadoService.listarAssocidadosDto();
 
         assertFalse(resultado.isEmpty());
         assertEquals(2, resultado.size());
@@ -116,7 +142,7 @@ public class AssociadoServiceTest {
         when(associadoRepo.findAll()).thenReturn(Collections.emptyList());
 
         VotosException exception = assertThrows(VotosException.class, () ->
-                associadoService.listarAssocidados()
+                associadoService.listarAssocidadosDto()
         );
         assertEquals(ErroMensagem.ASSOCIADO_NAO_ENCONTRADO.getMensagem(), exception.getMessage());
     }

@@ -26,13 +26,13 @@ public class AssociadoController {
 
     @GetMapping("/")
     public ResponseEntity<AssociadoDto> buscarAssociado(@RequestParam UUID associadoId) {
-        AssociadoDto dto = associadoService.buscarAssociado(associadoId);
+        AssociadoDto dto = associadoService.buscarAssociadoDto(associadoId);
         return ResponseEntity.ok(dto);
     }
 
     @GetMapping()
     public ResponseEntity<?> listarAssociados() {
-        List<AssociadoDto> associados = associadoService.listarAssocidados();
+        List<AssociadoDto> associados = associadoService.listarAssocidadosDto();
         return ResponseEntity.ok(associados);
     }
 

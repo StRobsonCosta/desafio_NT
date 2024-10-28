@@ -38,14 +38,19 @@ public class PautaService {
         }
     }
 
-    public PautaDTO buscarPauta(UUID pautaId) {
+    public PautaDTO buscarPautaDto(UUID pautaId) {
         Pauta pauta = pautaRepo.findById(pautaId)
                 .orElseThrow(() -> new VotosException(ErroMensagem.PAUTA_NAO_ENCONTRADA));
 
         return new PautaDTO(pauta.getId(), pauta.getDescricao());
     }
 
-    public List<PautaDTO> listarPautas() {
+    public Pauta buscarPauta(UUID pautaId) {
+        return pautaRepo.findById(pautaId)
+                .orElseThrow(() -> new VotosException(ErroMensagem.PAUTA_NAO_ENCONTRADA));
+    }
+
+    public List<PautaDTO> listarPautasDto() {
         List<Pauta> pautas = pautaRepo.findAll();
 
         if (CollectionUtils.isEmpty(pautas))

@@ -67,11 +67,22 @@ public class PautaServiceTest {
     }
 
     @Test
+    void deveBuscarPautaDtoComSucesso() {
+        UUID pautaId = UUID.randomUUID();
+        when(pautaRepo.findById(pautaId)).thenReturn(Optional.of(pauta));
+
+        PautaDTO resultado = pautaService.buscarPautaDto(pautaId);
+
+        assertNotNull(resultado);
+        assertEquals(pauta.getDescricao(), resultado.getDescricao());
+    }
+
+    @Test
     void deveBuscarPautaComSucesso() {
         UUID pautaId = UUID.randomUUID();
         when(pautaRepo.findById(pautaId)).thenReturn(Optional.of(pauta));
 
-        PautaDTO resultado = pautaService.buscarPauta(pautaId);
+        Pauta resultado = pautaService.buscarPauta(pautaId);
 
         assertNotNull(resultado);
         assertEquals(pauta.getDescricao(), resultado.getDescricao());
@@ -82,14 +93,14 @@ public class PautaServiceTest {
         UUID pautaId = UUID.randomUUID();
         when(pautaRepo.findById(pautaId)).thenReturn(Optional.empty());
 
-        assertThrows(VotosException.class, () -> pautaService.buscarPauta(pautaId));
+        assertThrows(VotosException.class, () -> pautaService.buscarPautaDto(pautaId));
     }
 
     @Test
-    void deveListarPautasComSucesso() {
+    void deveListarPautasDtoComSucesso() {
         when(pautaRepo.findAll()).thenReturn(Collections.singletonList(pauta));
 
-        List<PautaDTO> resultado = pautaService.listarPautas();
+        List<PautaDTO> resultado = pautaService.listarPautasDto();
 
         assertNotNull(resultado);
         assertEquals(1, resultado.size());
@@ -100,7 +111,7 @@ public class PautaServiceTest {
     void deveLancarExcecaoQuandoNaoHouverPautas() {
         when(pautaRepo.findAll()).thenReturn(Collections.emptyList());
 
-        assertThrows(VotosException.class, () -> pautaService.listarPautas());
+        assertThrows(VotosException.class, () -> pautaService.listarPautasDto());
     }
 
     @Test

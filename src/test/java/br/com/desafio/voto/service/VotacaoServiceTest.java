@@ -2,13 +2,12 @@ package br.com.desafio.voto.service;
 
 import br.com.desafio.voto.dto.ResultadoVotacaoDTO;
 import br.com.desafio.voto.dto.VotoDTO;
+import br.com.desafio.voto.enums.ErroMensagem;
 import br.com.desafio.voto.exception.VotosException;
 import br.com.desafio.voto.model.Associado;
 import br.com.desafio.voto.model.Pauta;
 import br.com.desafio.voto.model.SessaoVotacao;
 import br.com.desafio.voto.model.Voto;
-import br.com.desafio.voto.repository.AssociadoRepository;
-import br.com.desafio.voto.repository.PautaRepository;
 import br.com.desafio.voto.repository.VotoRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +20,6 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 
 import java.util.Collections;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -37,13 +35,13 @@ public class VotacaoServiceTest {
     private VotacaoService votacaoService;
 
     @Mock
-    private PautaRepository pautaRepo;
-
-    @Mock
     private VotoRepository votoRepo;
 
     @Mock
-    private AssociadoRepository associadoRepo;
+    private AssociadoService associadoService;
+
+    @Mock
+    private PautaService pautaService;
 
     @Mock
     private CpfValidationService cpfValidationService;
@@ -77,7 +75,7 @@ public class VotacaoServiceTest {
     @Test
     void deveAbrirSessaoComSucesso() {
         UUID pautaId = pauta.getId();
-        when(pautaRepo.findById(pautaId)).thenReturn(Optional.of(pauta));
+        when(pautaService.buscarPauta(pautaId)).thenReturn(pauta);
 
         votacaoService.abrirSessao(pautaId, 10);
 
@@ -88,7 +86,7 @@ public class VotacaoServiceTest {
     @Test
     void deveLancarExcecaoAoAbrirSessaoParaPautaInexistente() {
         UUID pautaId = pauta.getId();
-        when(pautaRepo.findById(pautaId)).thenReturn(Optional.empty());
+        when(pautaService.buscarPauta(pautaId)).thenThrow(new VotosException(ErroMensagem.ASSOCIADO_NAO_ENCONTRADO));
 
         assertThrows(VotosException.class, () -> votacaoService.abrirSessao(pautaId, 10));
     }
@@ -123,8 +121,8 @@ public class VotacaoServiceTest {
         associado.setId(votoDTO.getAssociadoId());
         associado.setCpf("valid-cpf");
 
-        when(associadoRepo.findById(votoDTO.getAssociadoId())).thenReturn(Optional.of(associado));
-        when(pautaRepo.findById(votoDTO.getPautaId())).thenReturn(Optional.of(pauta));
+        when(associadoService.buscarAssociado(associado.getId())).thenReturn(associado);
+        when(pautaService.buscarPauta(pauta.getId())).thenReturn(pauta);
         when(redisTemplate.opsForValue().get("sessao:" + pauta.getId())).thenReturn(new SessaoVotacao());
         when(redisTemplate.hasKey(anyString())).thenReturn(false);
 
@@ -140,23 +138,24 @@ public class VotacaoServiceTest {
 
     @Test
     void deveLancarExcecaoAoRegistrarVotoParaAssociadoInexistente() {
-        when(associadoRepo.findById(votoDTO.getAssociadoId())).thenReturn(Optional.empty());
+        when(associadoService.buscarAssociado(votoDTO.getAssociadoId()))
+                .thenThrow(new VotosException(ErroMensagem.ASSOCIADO_NAO_ENCONTRADO));
 
         assertThrows(VotosException.class, () -> votacaoService.registrarVoto(votoDTO));
     }
 
     @Test
     void deveLancarExcecaoAoRegistrarVotoParaPautaInexistente() {
-        when(associadoRepo.findById(votoDTO.getAssociadoId())).thenReturn(Optional.of(associado));
-        when(pautaRepo.findById(votoDTO.getPautaId())).thenReturn(Optional.empty());
+        when(associadoService.buscarAssociado(votoDTO.getAssociadoId())).thenReturn(associado);
+        when(pautaService.buscarPauta(votoDTO.getPautaId())).thenThrow(new VotosException(ErroMensagem.ASSOCIADO_NAO_ENCONTRADO));
 
         assertThrows(VotosException.class, () -> votacaoService.registrarVoto(votoDTO));
     }
 
     @Test
     void deveLancarExcecaoAoRegistrarVotoParaSessaoFechada() {
-        when(associadoRepo.findById(votoDTO.getAssociadoId())).thenReturn(Optional.of(associado));
-        when(pautaRepo.findById(votoDTO.getPautaId())).thenReturn(Optional.of(pauta));
+        when(associadoService.buscarAssociado(votoDTO.getAssociadoId())).thenReturn(associado);
+        when(pautaService.buscarPauta(votoDTO.getPautaId())).thenReturn(pauta);
         when(redisTemplate.opsForValue().get("sessao:" + pauta.getId())).thenReturn(null);
 
         assertThrows(VotosException.class, () -> votacaoService.registrarVoto(votoDTO));
@@ -168,7 +167,7 @@ public class VotacaoServiceTest {
         pautaMock.setId(pauta.getId());
         pautaMock.setDescricao("Descrição da Pauta");
 
-        when(pautaRepo.findById(pauta.getId())).thenReturn(Optional.of(pautaMock));
+        when(pautaService.buscarPauta(pauta.getId())).thenReturn(pautaMock);
 
         when(votoRepo.findByPautaId(pauta.getId())).thenReturn(Collections.singletonList(new Voto(null, pautaMock, associado, true)));
 
@@ -180,7 +179,7 @@ public class VotacaoServiceTest {
 
     @Test
     void devePublicarResultadoComSucesso() {
-        when(pautaRepo.findById(pauta.getId())).thenReturn(Optional.of(pauta));
+        when(pautaService.buscarPauta(pauta.getId())).thenReturn(pauta);
 
         when(votoRepo.findByPautaId(pauta.getId())).thenReturn(Collections.singletonList(new Voto(null, pauta, associado, true)));
 
@@ -195,8 +194,20 @@ public class VotacaoServiceTest {
 
     @Test
     void deveLancarExcecaoAoCalcularResultadoParaPautaInexistente() {
-        when(pautaRepo.findById(pauta.getId())).thenReturn(Optional.empty());
+        when(pautaService.buscarPauta(pauta.getId())).thenThrow(new VotosException(ErroMensagem.ASSOCIADO_NAO_ENCONTRADO));
 
         assertThrows(VotosException.class, () -> votacaoService.calcularResultado(pauta.getId()));
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoAssociadoNaoEncontrado() {
+        when(associadoService.buscarAssociado(associado.getId()))
+                .thenThrow(new VotosException(ErroMensagem.ASSOCIADO_NAO_ENCONTRADO));
+
+        VotosException exception = assertThrows(VotosException.class, () -> {
+            votacaoService.registrarVoto(votoDTO);
+        });
+
+        assertEquals(ErroMensagem.ASSOCIADO_NAO_ENCONTRADO.getMensagem(), exception.getMessage());
     }
 }

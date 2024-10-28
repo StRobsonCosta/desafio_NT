@@ -47,11 +47,11 @@ public class PautaControllerTest {
 
     @Test
     public void buscarPauta_deveRetornarPautaComStatus200() {
-        when(pautaService.buscarPauta(pautaId)).thenReturn(pautaDTO);
+        when(pautaService.buscarPautaDto(pautaId)).thenReturn(pautaDTO);
 
         ResponseEntity<PautaDTO> response = pautaController.buscarPauta(pautaId);
 
-        verify(pautaService).buscarPauta(pautaId);
+        verify(pautaService).buscarPautaDto(pautaId);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo(pautaDTO);
     }
@@ -59,11 +59,11 @@ public class PautaControllerTest {
     @Test
     public void listarPautas_deveRetornarListaDePautasComStatus200() {
         List<PautaDTO> pautas = List.of(pautaDTO);
-        when(pautaService.listarPautas()).thenReturn(pautas);
+        when(pautaService.listarPautasDto()).thenReturn(pautas);
 
         ResponseEntity<?> response = pautaController.listarPautas();
 
-        verify(pautaService).listarPautas();
+        verify(pautaService).listarPautasDto();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo(pautas);
     }

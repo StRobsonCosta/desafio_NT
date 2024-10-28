@@ -8,8 +8,6 @@ import br.com.desafio.voto.model.Associado;
 import br.com.desafio.voto.model.Pauta;
 import br.com.desafio.voto.model.SessaoVotacao;
 import br.com.desafio.voto.model.Voto;
-import br.com.desafio.voto.repository.AssociadoRepository;
-import br.com.desafio.voto.repository.PautaRepository;
 import br.com.desafio.voto.repository.VotoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,10 +27,10 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class VotacaoService {
 
-    private final PautaRepository pautaRepo;
     private final VotoRepository votoRepo;
 
-    private final AssociadoRepository associadoRepo;
+    private final PautaService pautaService;
+    private final AssociadoService associadoService;
     private final CpfValidationService cpfValidationService;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final RedisTemplate<String, SessaoVotacao> redisTemplate;
@@ -43,8 +41,7 @@ public class VotacaoService {
         LocalDateTime agora = LocalDateTime.now();
         LocalDateTime fim = agora.plusMinutes(minutos);
 
-        Pauta pauta = pautaRepo.findById(pautaId)
-                .orElseThrow(() ->  new VotosException(ErroMensagem.PAUTA_NAO_ENCONTRADA));
+        Pauta pauta = pautaService.buscarPauta(pautaId);
 
         SessaoVotacao sessao = new SessaoVotacao(null, new Pauta(pautaId, pauta.getDescricao()), agora, fim);
 
@@ -65,28 +62,32 @@ public class VotacaoService {
     @Transactional
     public Voto registrarVoto(VotoDTO votoDTO) {
 
-        Associado associado = associadoRepo.findById(votoDTO.getAssociadoId())
-                .orElseThrow(() -> new VotosException(ErroMensagem.ASSOCIADO_NAO_ENCONTRADO ));
-
+        Associado associado = associadoService.buscarAssociado(votoDTO.getAssociadoId());
         validarCpf(associado.getCpf());
-
-        Pauta pauta = pautaRepo.findById(votoDTO.getPautaId())
-                .orElseThrow(() ->  new VotosException(ErroMensagem.PAUTA_NAO_ENCONTRADA));
-
+        Pauta pauta = pautaService.buscarPauta(votoDTO.getPautaId());
         SessaoVotacao sessao = buscarSessao(votoDTO.getPautaId());
 
         validarSessaoAberta(sessao);
-
-        String votoKey = String.format("voto:%s:%s", pauta.getId(), associado.getId());
-        if (Boolean.TRUE.equals(redisTemplate.hasKey(votoKey)))
-            throw new VotosException(ErroMensagem.ASSOCIADO_JA_VOTOU);
+        validarVotoUnico(pauta, associado);
 
         Voto voto = new Voto(null, pauta, associado, votoDTO.getValorVoto());
         Voto savedVoto = votoRepo.save(voto);
 
-        redisTemplate.opsForValue().set(votoKey, sessao);
+        registrarVotoNoRedis(pauta, associado, sessao);
 
         return savedVoto;
+    }
+
+    private void validarVotoUnico(Pauta pauta, Associado associado) {
+        String votoKey = String.format("voto:%s:%s", pauta.getId(), associado.getId());
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(votoKey))) {
+            throw new VotosException(ErroMensagem.ASSOCIADO_JA_VOTOU);
+        }
+    }
+
+    private void registrarVotoNoRedis(Pauta pauta, Associado associado, SessaoVotacao sessao) {
+        String votoKey = String.format("voto:%s:%s", pauta.getId(), associado.getId());
+        redisTemplate.opsForValue().set(votoKey, sessao);
     }
 
     private void validarCpf(String cpf) {
@@ -101,8 +102,7 @@ public class VotacaoService {
         Long votosSim = votos.stream().filter(Voto::getValorVoto).count();
         Long votosNao = votos.size() - votosSim;
 
-        Pauta pauta = pautaRepo.findById(pautaId)
-                .orElseThrow(() ->  new VotosException(ErroMensagem.PAUTA_NAO_ENCONTRADA));
+        Pauta pauta = pautaService.buscarPauta(pautaId);
 
         return new ResultadoVotacaoDTO(pauta.getDescricao(), votosSim, votosNao);
     }

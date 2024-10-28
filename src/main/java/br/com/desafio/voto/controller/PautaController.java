@@ -26,13 +26,13 @@ public class PautaController {
 
     @GetMapping("/")
     public ResponseEntity<PautaDTO> buscarPauta(@RequestParam UUID pautaId) {
-        PautaDTO pauta = pautaService.buscarPauta(pautaId);
+        PautaDTO pauta = pautaService.buscarPautaDto(pautaId);
         return ResponseEntity.ok(pauta);
     }
 
     @GetMapping()
     public ResponseEntity<?> listarPautas() {
-        List<PautaDTO> pautas = pautaService.listarPautas();
+        List<PautaDTO> pautas = pautaService.listarPautasDto();
         return ResponseEntity.ok(pautas);
     }
 

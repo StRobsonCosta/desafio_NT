@@ -24,9 +24,7 @@ public class VotacaoController {
     private static final Long minutoDefault = 1L;
 
     @PostMapping("/sessao")
-    public ResponseEntity<?> abrirSessao(
-            @RequestParam UUID pautaId,
-            @RequestParam(required = false) Long minutos) {
+    public ResponseEntity<?> abrirSessao(@RequestParam UUID pautaId, @RequestParam(required = false) Long minutos) {
         if(Objects.isNull(minutos))
             minutos = minutoDefault;
 

@@ -21,7 +21,6 @@ public class AssociadoService {
     private final AssociadoRepository associadoRepo;
     private final CpfValidationService cpfValidator;
 
-
     public AssociadoDto criarAssociado(AssociadoDto dto) {
         validarCpfAssociado(dto);
 
@@ -53,14 +52,19 @@ public class AssociadoService {
 
     }
 
-    public AssociadoDto buscarAssociado(UUID associadoId) {
+    public AssociadoDto buscarAssociadoDto(UUID associadoId) {
         Associado associado = associadoRepo.findById(associadoId)
                 .orElseThrow(() -> new VotosException(ErroMensagem.ASSOCIADO_NAO_ENCONTRADO));
 
         return new AssociadoDto(associado.getId(), associado.getNome(), associado.getCpf());
     }
 
-    public List<AssociadoDto> listarAssocidados() {
+    public Associado buscarAssociado(UUID associadoId) {
+        return associadoRepo.findById(associadoId)
+                .orElseThrow(() -> new VotosException(ErroMensagem.ASSOCIADO_NAO_ENCONTRADO));
+    }
+
+    public List<AssociadoDto> listarAssocidadosDto() {
         List<Associado>  associados = associadoRepo.findAll();
 
         if (CollectionUtils.isEmpty(associados))
