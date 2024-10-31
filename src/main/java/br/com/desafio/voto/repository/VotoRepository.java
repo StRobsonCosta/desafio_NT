@@ -9,7 +9,6 @@ import java.util.UUID;
 
 @Repository
 public interface VotoRepository extends JpaRepository<Voto, UUID> {
-
     Boolean existsByPautaIdAndAssociadoId(UUID pautaId, UUID associadoId);
 
     List<Voto> findByPautaId(UUID pautaId);

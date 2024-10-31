@@ -9,6 +9,8 @@ import br.com.desafio.voto.model.Pauta;
 import br.com.desafio.voto.model.SessaoVotacao;
 import br.com.desafio.voto.model.Voto;
 import br.com.desafio.voto.repository.VotoRepository;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -55,6 +57,15 @@ public class VotacaoServiceTest {
     @Mock
     private ValueOperations<String, SessaoVotacao> valueOperations;
 
+    @Mock
+    private Timer tempoSessaoAbertaTimer;
+
+    @Mock
+    private SimpleMeterRegistry meterRegistry;
+
+    @Mock
+    private VotacaoMetricsService votacaoMetricsService;
+
     private Pauta pauta;
     private Associado associado;
     private VotoDTO votoDTO;
@@ -65,9 +76,11 @@ public class VotacaoServiceTest {
         UUID pautaId = UUID.randomUUID();
         UUID associadoId = UUID.randomUUID();
 
+        meterRegistry = new SimpleMeterRegistry();
         pauta = new Pauta(pautaId, "Descrição da Pauta");
         associado = new Associado(associadoId, "12345678909", "Nome do Associado");
         votoDTO = new VotoDTO(associadoId, pautaId, true);
+        votacaoMetricsService = new VotacaoMetricsService(meterRegistry, associadoService, tempoSessaoAbertaTimer);
 
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
     }

@@ -178,6 +178,19 @@ Execute os testes com o Maven:
    ```
 
 ---
+## **Testes de Performance Com Locust**
+
+- É possível ajustar a estratégia do teste alterando o verbo HTTP no arquivo **carga.py**.
+
+- Comando para realizar o teste (Na raíz do projeto):
+
+   ```bash
+   locust -f carga.py
+   ```
+- Acesse: - **URL**: [http://0.0.0.0:8089](http://0.0.0.0:8089)
+- Ajuste a Estratégia e monitore pela Aba Charts
+
+---
 
 ## **Considerações Finais**
 

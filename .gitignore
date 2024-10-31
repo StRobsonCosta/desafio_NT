@@ -35,6 +35,7 @@ build/
 
 ### LOGS ###
 logs/
+__pycache__/
 
 ### SECRETS ###
 .env

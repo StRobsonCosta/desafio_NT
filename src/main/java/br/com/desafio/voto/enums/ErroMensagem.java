@@ -1,5 +1,10 @@
 package br.com.desafio.voto.enums;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@Getter
+@RequiredArgsConstructor
 public enum ErroMensagem {
 
     PAUTA_NAO_ENCONTRADA("Pauta não encontrada parao ID fornecido."),
@@ -20,11 +25,4 @@ public enum ErroMensagem {
 
     private final String mensagem;
 
-    ErroMensagem(String mensagem) {
-        this.mensagem = mensagem;
-    }
-
-    public String getMensagem() {
-        return mensagem;
-    }
 }
