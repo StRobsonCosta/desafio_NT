@@ -33,6 +33,7 @@ Esta aplicação tem como objetivo **gerenciar sessões de votação** para uma 
 - **Apache Kafka** para **mensageria** e publicação do resultado das votações.
 - **PostgreSQL** como banco de dados para persistência das pautas e votos.
 - **Swagger** para documentação e teste dos endpoints.
+- **Prometheus e Grafana** para Observabilidade.
 
 ### **Estrutura do Projeto**
 
@@ -65,7 +66,8 @@ src/
 - **Redis**: Armazenamento em cache e gerenciamento de sessões.  
 - **Apache Kafka**: Mensageria para envio de resultados das sessões.  
 - **Swagger**: Documentação e teste interativo da API.  
-- **Docker/Docker-Compose**: Contêineres para a aplicação e serviços.  
+- **Docker/Docker-Compose**: Contêineres para a aplicação e serviços.
+- **Prometheus e Grafana**: Métricas e Dashboard para Observabilidade.
 
 ---
 
@@ -94,7 +96,7 @@ src/
 3. **Executar os serviços com Docker Compose**:
 
    ```bash
-   docker-compose up --build
+   docker-compose up --build -d
    ```
 
 4. **Verificar se os containers estão rodando**:
@@ -191,6 +193,18 @@ Execute os testes com o Maven:
 - Ajuste a Estratégia e monitore pela Aba Charts
 
 ---
+## **Observabilidade com Grafana**
+
+- É possível Monitorar a Aplicação com o Grafana junto com o Prometheus que já está configurado no projeto.
+1. Acesse o Grafana pela **URL**: [3000/dashboard/](http://localhost:3000/dashboard/)
+2. No menu lateral do Grafana, new Dashboard > import
+3. Selecione o arquivo (ou o conteúdo do) **Grafana - Votos-Nt-DashBoard.json** no diretorio: __payloads__.
+4. Ajuste o DataSource para o Prometheus, configure o conection para **http://host.docker.internal:9090/** (caso não esteja usando docker use **localhost:9090**)
+
+- Ajuste a Estratégia de métricas e monitore.
+- É possível identificar as métricas disponíveis para monitorar e criar novos Dashboards pela **URL**: [http://0.0.0.0:8081/actuator/prometheus](http://0.0.0.0:8081/actuator/prometheus)
+
+---
 
 ## **Considerações Finais**
 
@@ -199,3 +213,4 @@ Esta aplicação foi projetada para ser **modular e escalável**, usando boas pr
 - **SOLID** para organização dos serviços.
 - **Redis com TTL** para gerenciamento eficiente de sessões.
 - **Kafka** para garantir uma comunicação assíncrona entre os serviços.
+- **Prometheus e Grafana** para Observabilidade.

@@ -5,7 +5,7 @@ services:
     container_name: redis-nt
     ports:
       - "6379:6379"
-    command: redis-server --requirepass "" --notify-keyspace-events Ex
+    command: ["redis-server", "--requirepass", "", "--notify-keyspace-events", "Ex", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
     networks:
       - app-nt
     volumes:
@@ -62,7 +62,24 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - ./alerts.yml:/etc/prometheus/alerts.yml
     networks:
-      - app-nt    
+      - app-nt
+      
+  grafana:
+    image: grafana/grafana
+    container_name: grafana-nt
+    volumes:
+      - ./grafana:/var/lib/grafana
+    environment:
+    - GF_SECURITY_ADMIN_USER=admin  
+    - GF_SECURITY_ADMIN_PASSWORD=admin  
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+    networks:
+      - app-nt
+    depends_on:
+      - prometheus
+    user: root    
       
   mailhog:
     container_name: mailHog_nt
