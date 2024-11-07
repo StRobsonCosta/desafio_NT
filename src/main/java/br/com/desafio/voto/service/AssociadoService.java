@@ -75,6 +75,10 @@ public class AssociadoService {
                 .collect(Collectors.toList());
     }
 
+    public Long getTotalAssociados() {
+        return associadoRepo.count();
+    }
+
     public void deletarAssociado(UUID associadoId) {
         if (Objects.isNull(associadoId))
             throw new VotosException(ErroMensagem.ASSOCIADO_NAO_ENCONTRADO);

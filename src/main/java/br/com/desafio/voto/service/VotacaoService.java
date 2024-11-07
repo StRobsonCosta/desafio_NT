@@ -9,6 +9,7 @@ import br.com.desafio.voto.model.Pauta;
 import br.com.desafio.voto.model.SessaoVotacao;
 import br.com.desafio.voto.model.Voto;
 import br.com.desafio.voto.repository.VotoRepository;
+import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -20,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -31,11 +33,13 @@ public class VotacaoService {
 
     private final PautaService pautaService;
     private final AssociadoService associadoService;
+    private final VotacaoMetricsService votacaoMetricsService;
     private final CpfValidationService cpfValidationService;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final RedisTemplate<String, SessaoVotacao> redisTemplate;
 
     public void abrirSessao(UUID pautaId, long minutos) {
+        Timer.Sample sample = votacaoMetricsService.iniciarTempoSessao();
 
         String key = "sessao:" + pautaId;
         LocalDateTime agora = LocalDateTime.now();
@@ -46,6 +50,9 @@ public class VotacaoService {
         SessaoVotacao sessao = new SessaoVotacao(null, new Pauta(pautaId, pauta.getDescricao()), agora, fim);
 
         redisTemplate.opsForValue().set(key, sessao, minutos, TimeUnit.MINUTES);
+
+        Executors.newSingleThreadScheduledExecutor().schedule(() ->
+                votacaoMetricsService.registrarFimSessao(sample), minutos, TimeUnit.MINUTES);
     }
 
     public SessaoVotacao buscarSessao(UUID pautaId) {
@@ -74,6 +81,7 @@ public class VotacaoService {
         Voto savedVoto = votoRepo.save(voto);
 
         registrarVotoNoRedis(pauta, associado, sessao);
+        atualizarMetricas(votoDTO);
 
         return savedVoto;
     }
@@ -95,6 +103,15 @@ public class VotacaoService {
         if (Boolean.FALSE.equals(aptoParaVotar))
             throw new VotosException(ErroMensagem.ASSOCIADO_INAPTO);
 
+    }
+
+    private void atualizarMetricas(VotoDTO votoDTO) {
+        if (Boolean.TRUE.equals(votoDTO.getValorVoto()))
+            votacaoMetricsService.incrementarVotoSim();
+        else
+            votacaoMetricsService.incrementarVotoNao();
+
+        votacaoMetricsService.incrementarContadorDeVotos();
     }
 
     public ResultadoVotacaoDTO calcularResultado(UUID pautaId) {
@@ -120,7 +137,6 @@ public class VotacaoService {
     private void validarSessaoAberta(SessaoVotacao sessao) {
         if (Objects.isNull(sessao))
             throw new VotosException(ErroMensagem.SESSAO_ENCERRADA);
-
     }
 
 }

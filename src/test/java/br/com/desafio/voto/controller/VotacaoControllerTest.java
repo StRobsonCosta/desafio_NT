@@ -3,12 +3,16 @@ package br.com.desafio.voto.controller;
 import static org.mockito.Mockito.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Objects;
 import java.util.UUID;
 
 import br.com.desafio.voto.dto.ResultadoVotacaoDTO;
 import br.com.desafio.voto.dto.VotoDTO;
 import br.com.desafio.voto.model.Voto;
 import br.com.desafio.voto.service.VotacaoService;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -25,6 +29,15 @@ public class VotacaoControllerTest {
     @InjectMocks
     private VotacaoController votacaoController;
 
+    @Mock
+    private SimpleMeterRegistry meterRegistry;
+
+    @Mock
+    private Timer timer;
+
+    @Mock
+    private Counter counter;
+
     private UUID pautaId;
     private VotoDTO votoDTO;
     private Voto voto;
@@ -39,6 +52,20 @@ public class VotacaoControllerTest {
         votoDTO = new VotoDTO(associadoId, pautaId, true);
         voto = new Voto();
         resultado = new ResultadoVotacaoDTO("Pauta Teste", 12L, 134L);
+
+        meterRegistry = new SimpleMeterRegistry();
+        votacaoController = new VotacaoController(votacaoService, meterRegistry);
+    }
+
+    @Test
+    void ao_abrirSessao_semMinutosInformadosDeveUsarValorPadraoEStatus200() {
+        ResponseEntity<?> response = votacaoController.abrirSessao(pautaId, null);
+
+        verify(votacaoService).abrirSessao(pautaId, 1L);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isInstanceOf(String.class);
+        assertThat(Objects.requireNonNull(response.getBody()).toString()).contains("Sessão iniciada às");
     }
 
     @Test
@@ -48,7 +75,7 @@ public class VotacaoControllerTest {
         verify(votacaoService).abrirSessao(pautaId, 1L);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isInstanceOf(String.class);
-        assertThat(response.getBody().toString()).contains("Sessão iniciada às");
+        assertThat(Objects.requireNonNull(response.getBody()).toString()).contains("Sessão iniciada às");
     }
 
     @Test

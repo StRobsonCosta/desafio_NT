@@ -35,6 +35,8 @@ build/
 
 ### LOGS ###
 logs/
+__pycache__/
+grafana/
 
 ### SECRETS ###
 .env

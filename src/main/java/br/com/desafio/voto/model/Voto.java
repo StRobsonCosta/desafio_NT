@@ -35,5 +35,4 @@ public class Voto implements Serializable {
 
     @Column(nullable = false)
     private Boolean valorVoto;
-
 }
